@@ -10,7 +10,8 @@ import java.io.IOException;
 
 
 public class ImageTransformationTest {
-  
+
+//  not sure why this is unable to be tested...  
 //  @Test
 //  public void testImageTransformation() throws IOException {
 //    ImageTransformation.main(new String[]{"1"});
@@ -18,7 +19,7 @@ public class ImageTransformationTest {
 
   @Test
   public void testPipelineImageProcessing() throws IOException {
-    PipelineImageProcessing.runPipelineProcessing();
+    PipelineImageProcessing.runPipelineImageProcessing();
   }
 
 

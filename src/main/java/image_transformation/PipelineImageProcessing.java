@@ -10,7 +10,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
 public class PipelineImageProcessing {
-    public static void runPipelineProcessing() {
+    public static void runPipelineImageProcessing() {
     // Number of images to process
     int numImages = 10;
     
