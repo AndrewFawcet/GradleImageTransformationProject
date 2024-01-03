@@ -21,7 +21,10 @@ public class ImageTransformationTest {
   public void testPipelineImageProcessing() throws IOException {
     PipelineImageProcessing.runPipelineImageProcessing();
   }
-
+  @Test
+  public void testPipelineImageProcessingUsingArrays() throws IOException {
+    PipelineImageProcessingUsingArrays.runPipelineImageProcessingUsingArrays();   
+  }
 
 }
 

@@ -13,11 +13,15 @@ public class ImageTransformation {
             System.out.println("Choose an image transformation method:");
             System.out.println("1. Pipeline Image Processing Using Image Buffer");
             System.out.println("2. Pipeline Image Processing Using int Arrays");
+            System.out.println("3. Pipeline Image Processing Using int Arrays and Sharding (no synchronisation)");            
             System.out.println("0. Exit");
 
             choice = scanner.nextInt();
 
             switch (choice) {
+                case 3:
+                    PipelineImageProcessingUsingArraysAndSharding.runPipelineImageProcessingUsingArraysAndSharding();
+                    break;               
                 case 2:
                     PipelineImageProcessingUsingArrays.runPipelineImageProcessingUsingArrays();
                     break;
