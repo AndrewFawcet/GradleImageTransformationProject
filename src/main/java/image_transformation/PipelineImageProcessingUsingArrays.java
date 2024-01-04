@@ -34,12 +34,12 @@ public class PipelineImageProcessingUsingArrays {
         
         // Iterate through the images
         for (int i = 1; i <= numImages; i++) {
-          String imagePath = basePath + "input/mountain" + i + ".png";
+          String inputImagePath = basePath + "input/mountain" + i + ".png";
           String outputImagePath = basePath + "output/processed_mountain" + i + ".png";
   
           try {
             // Load the original image
-            BufferedImage originalImage = ImageIO.read(new File(imagePath));
+            BufferedImage originalImage = ImageIO.read(new File(inputImagePath));
   
             int[] imageArrayWithDimensions = imageToArrayWithDimensions(originalImage);
   
@@ -71,7 +71,7 @@ public class PipelineImageProcessingUsingArrays {
         csvData.append(numThreads).append(",").append(totalTime).append("\n");    
       }
   
-      String csvFilePath = "C:/PhD/Code/GradleImageTransformationProject/src/main/resources/pipelineTimings_intArrays.csv";
+      String csvFilePath = basePath + "pipelineTimings_intArrays.csv";
   
       try (FileWriter writer = new FileWriter(csvFilePath)) {
         // Write the CSV data to the file

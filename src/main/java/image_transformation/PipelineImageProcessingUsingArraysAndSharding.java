@@ -14,7 +14,8 @@ import javax.imageio.ImageIO;
 public class PipelineImageProcessingUsingArraysAndSharding {
 
   // initial int array with sharding
-  //placing shard in hashmap, if shards for image complete, collating and saving the image, then deleting the shards from the hashmap. (no synchronisation)
+  // placing shard in hashmap, if shards for image complete, collating and saving
+  // the image, then deleting the shards from the hashmap. (no synchronisation)
   // pipelining 10 images putting them directly in an array. No wrapper class.
 
   // Not Working
@@ -40,22 +41,25 @@ public class PipelineImageProcessingUsingArraysAndSharding {
       startTime = System.currentTimeMillis();
 
       for (int i = 1; i <= numImages; i++) {
-        String imagePath = basePath + "input/mountain" + i + ".png";
-        String outputImagePath = basePath + "output/processed_mountain" + i + ".png";
+        String inputImagePath = basePath + "input/mountain" + i + ".png";
+//        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + ".png";
+        //diagnose image transformation problems. Save all images.
+        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + " "+ numThreads + ".png";
         final int numImage = i;
 
         try {
-          BufferedImage originalImage = ImageIO.read(new File(imagePath));
+          BufferedImage originalImage = ImageIO.read(new File(inputImagePath));
           int[] imageArrayWithDimensions = imageToArrayWithDimensions(originalImage);
 
           int originalImageHeight = originalImage.getHeight();
           int shardHeight = originalImageHeight / numThreads;
 
-
-          //Number of threads defines the number of shards. This iterates through the image breaking it into shards.
+          // Number of threads defines the number of shards. This iterates through the
+          // image breaking it into shards.
           int numShards = numThreads;
-          
+
           for (int j = 0; j < numShards; j++) {
+            final int numShard = j;
             int startY = j * shardHeight;
             int endY = (j == numThreads - 1) ? originalImage.getHeight() : startY + shardHeight;
 
@@ -63,26 +67,25 @@ public class PipelineImageProcessingUsingArraysAndSharding {
 
             processingExecutor.submit(() -> {
               int[] processedShard = processImageShard(shard);
-              int key = numImage * 100 + startY;
+              int key = numImage * 100 + numShard;
               shardsMap.put(key, processedShard);
               int shardCount = shardsCountMap.getOrDefault(numImage, 0);
               shardCount++;
               shardsCountMap.put(numImage, shardCount);
               if (shardCount == numShards) {
-                // All shards for this image number are present, collate and save the image, then remove shards from Map
-                collateAndSaveImage(numImage, shardsMap, basePath, originalImageHeight); 
-            }
+                // All shards for this image number are present, collate and save the image,
+                // then remove shards from Map
 
 
-//              }
+                collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeight, numShards);
+                removeShards(numShards, numImage, shardsMap, shardsCountMap);
+              }
+
             });
           }
         } catch (IOException e) {
           e.printStackTrace();
         }
-
-        //collate and save image here?
-
       }
 
       // Shutdown the processing executor when all tasks are submitted
@@ -108,7 +111,7 @@ public class PipelineImageProcessingUsingArraysAndSharding {
 
     }
 
-    String csvFilePath = "C:/Users/andre/Java play/FirstProject/src/ImageThread3/pipelineTimings_intArrays.csv";
+    String csvFilePath = basePath + "pipelineTimings_intArraysWithSharding.csv";
 
     try (FileWriter writer = new FileWriter(csvFilePath)) {
       // Write the CSV data to the file
@@ -120,7 +123,9 @@ public class PipelineImageProcessingUsingArraysAndSharding {
     System.out.println("Image processing completed.");
   }
 
-  //returns an integer array representing a shard of an image, when given the int array of the image, the width, and the start and end y coordinates for the shard. 
+  // returns an integer array representing a shard of an image, when given the int
+  // array of the image, the width, and the start and end y coordinates for the
+  // shard.
   public static int[] getShard(int[] pixelDataWithDimensions, int width, int startY, int endY) {
     int shardHeight = endY - startY;
     int[] shard = new int[2 + width * shardHeight];
@@ -134,7 +139,8 @@ public class PipelineImageProcessingUsingArraysAndSharding {
     return shard;
   }
 
-  //returns a int array with the first two numbers representing the image width and height.
+  // returns a int array with the first two numbers representing the image width
+  // and height.
   public static int[] imageToArrayWithDimensions(BufferedImage originalImage) {
 
     int width = originalImage.getWidth();
@@ -172,48 +178,44 @@ public class PipelineImageProcessingUsingArraysAndSharding {
 
   }
 
-  public static void collateAndSaveImage(int numImage, Map<Integer, int[]> shardsMap, String basePath, int originalImageHeight) {
-    int numShards = 10; // Assuming you have 10 threads per image
-//    int shardHeight = -1; 
+  public static void collateAndSaveImage(int numImage, Map<Integer, int[]> shardsMap, String outputImagePath,
+      int originalImageHeight, int numShards) {
+    // int shardHeight = -1;
 
     // Collect all shards for the given image number into a single array
     int[] assembledImage = null;
     boolean allShardsPresent = true;
 
     for (int j = 0; j < numShards; j++) {
-        int key = numImage * 100 + j;
-        if (shardsMap.containsKey(key)) {
-            int[] shard = shardsMap.get(key);
-            int shardWidth = shard[0]; // Extract shard width
-            int shardHeight = shard[1]; // Extract shard height
+      int key = numImage * 100 + j;
+      if (shardsMap.containsKey(key)) {
+        int[] shard = shardsMap.get(key);
+        int shardWidth = shard[0]; // Extract shard width
+        int shardHeight = shard[1]; // Extract shard height
 
-            if (assembledImage == null) {
-                // Initialize assembled image array considering width and original image height
-                assembledImage = new int[2 + shardWidth * originalImageHeight];
-                assembledImage[0] = shardWidth; // Width
-                assembledImage[1] = originalImageHeight; // Total height of the image
-            }
-
-            // Copy the shard data into the assembled image array
-            System.arraycopy(shard, 2, assembledImage, (j * shardHeight + 2) * shardWidth, shard.length - 2);
-        } else {
-            allShardsPresent = false;
-            break;
+        if (assembledImage == null) {
+          // Initialize assembled image array considering width and original image height
+          assembledImage = new int[2 + shardWidth * originalImageHeight];
+          assembledImage[0] = shardWidth; //Width
+          assembledImage[1] = originalImageHeight; // Total height of the image
         }
+
+        // Copy the shard data into the assembled image array
+        int startIndex = 2 + j * shardHeight * shardWidth;
+        System.arraycopy(shard, 2, assembledImage, startIndex, shard.length - 2);
+        //        System.arraycopy(shard, 2, assembledImage, (j * shardHeight + 2) * shardWidth, shard.length - 2);
+      } else {
+        System.out.println("All shards are not present, error in collating to save image. ");
+        allShardsPresent = false;
+        break;
+      }
     }
 
     if (allShardsPresent && assembledImage != null) {
-        // Save the assembled image
-        String outputImagePath = basePath + "output/processed_mountain" + numImage + ".png";
-        saveArrayWithDimensions(assembledImage, outputImagePath);
-
-        // Remove shards from the map for this image number
-        for (int j = 0; j < numShards; j++) {
-            shardsMap.remove(numImage * 100 + j);
-        }
+      // Save the assembled image
+      saveArrayWithDimensions(assembledImage, outputImagePath);
     }
-}
-
+  }
 
   public static void saveArrayWithDimensions(int[] pixelDataWithDimensions, String outputImagePath) {
 
@@ -225,8 +227,6 @@ public class PipelineImageProcessingUsingArraysAndSharding {
     image.setRGB(0, 0, width, height, pixelDataWithDimensions, 2, width);
 
     // Save the BufferedImage as a PNG file
-    outputImagePath = outputImagePath.substring(0, outputImagePath.length() - 4) + "_fromIntArrayWithSharding"
-        + outputImagePath.substring(outputImagePath.length() - 4);
     File outputFile = new File(outputImagePath);
     try {
       ImageIO.write(image, "png", outputFile);
@@ -234,6 +234,18 @@ public class PipelineImageProcessingUsingArraysAndSharding {
     } catch (IOException e) {
       System.out.println("Error saving intArray image: " + e.getMessage());
     }
+  }
+
+  public static void removeShards(int numShards, int numImage, Map<Integer, int[]> shardsMap,
+      Map<Integer, Integer> shardsCountMap) {
+    // Remove shards from the map for this image number
+    for (int j = 0; j < numShards; j++) {
+      shardsMap.remove(numImage * 100 + j);
+    }
+    // remove 10 from the shardsCountMap
+    shardsCountMap.put(numImage, shardsCountMap.get(numImage) - numShards);
+    System.out.println("successfuly removed for image " + numImage + ", shard count " + shardsCountMap.get(numImage));
+
   }
 
   public static int[] rotateImageArray(int[] pixelDataWithDimensions, int width, int startY, int endY) {
