@@ -10,23 +10,26 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
 public class PipelineImageProcessing {
-    public static void runPipelineImageProcessing() {
+  public static void runPipelineImageProcessing() {
     // Number of images to process
     int numImages = 10;
-    
+    // Number of threads to use for the processing (1 to the total number is tested)
+    int totalNumThreads = 10;
+
     // Record the start time for each run (only one run for now)
     StringBuilder csvData = new StringBuilder();
     long startTime;
     long endTime;
-    
-    // Paths and directories
-    String basePath ="C:/PhD/Code/GradleImageTransformationProject/src/main/resources/";
 
-    for (int numThreads = 1; numThreads <= 10; numThreads++) {
-      // Create an executor with a variable number of threads for inversion and grayscale
+    // Paths and directories
+    String basePath = "C:/PhD/Code/GradleImageTransformationProject/src/main/resources/";
+
+    for (int numThreads = 1; numThreads <= totalNumThreads; numThreads++) {
+      // Create an executor with a variable number of threads for inversion and
+      // grayscale
       ExecutorService processingExecutor = Executors.newFixedThreadPool(numThreads);
       startTime = System.currentTimeMillis();
-      
+
       // Iterate through the images
       for (int i = 1; i <= numImages; i++) {
         String imagePath = basePath + "input/mountain" + i + ".png";
@@ -63,9 +66,7 @@ public class PipelineImageProcessing {
       csvData.append(numThreads).append(",").append(totalTime).append("\n");
     }
 
-    String csvFilePath = "C:/PhD/Code/GradleImageTransformationProject/src/main/resources/pipelineTimings_Buffered.csv";
-
-
+    String csvFilePath = basePath + "pipelineTimings_ImageBuffered.csv";
 
     try (FileWriter writer = new FileWriter(csvFilePath)) {
       // Write the CSV data to the file
@@ -75,7 +76,7 @@ public class PipelineImageProcessing {
     }
 
     System.out.println("Image processing completed.");
-    }
+  }
 
   public static void processImage(BufferedImage originalImage, String outputImagePath) {
     BufferedImage rotatedImage = rotateImage(originalImage);
@@ -92,7 +93,7 @@ public class PipelineImageProcessing {
 
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        int pixel = originalImage.getRGB(x, y) ;
+        int pixel = originalImage.getRGB(x, y);
         int alpha = (pixel >> 24) & 0xFF;
 
         if (alpha == 0) {
@@ -141,7 +142,7 @@ public class PipelineImageProcessing {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         int pixel = originalImage.getRGB(x, y);
-//        System.out.println("pixel    " + pixel);
+        // System.out.println("pixel " + pixel);
         int alpha = (pixel >> 24) & 0xFF;
         int red = (pixel >> 16) & 0xFF;
         int green = (pixel >> 8) & 0xFF;
@@ -157,11 +158,12 @@ public class PipelineImageProcessing {
     return grayscaleImage;
   }
 
-
   // Save the image to a file
   public static void saveImage(BufferedImage image, String outputFilePath) {
     try {
-      ImageIO.write(image, "png", new File(outputFilePath));
+      File outputFile = new File(outputFilePath);
+      ImageIO.write(image, "png", outputFile);
+      System.out.println(outputFile.getName() + " Image saved successfully.");
     } catch (IOException e) {
       e.printStackTrace();
     }

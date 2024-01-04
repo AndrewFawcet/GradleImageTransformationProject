@@ -22,6 +22,10 @@ public class PipelineImageProcessingUsingArraysAndSharding {
   public static void runPipelineImageProcessingUsingArraysAndSharding() {
     // Number of images to process
     int numImages = 10;
+    //Number of shards to break the images into for processing (keep below 100, otherwise adjust hashmap keys.)
+    int totalNumShards = 10;
+    //Number of threads to use for the processing (1 to the total number is tested)
+    int totalNumThreads = 10;
 
     // Record the start time for each run (only one run for now)
     StringBuilder csvData = new StringBuilder();
@@ -36,7 +40,7 @@ public class PipelineImageProcessingUsingArraysAndSharding {
     Map<Integer, Integer> shardsCountMap = new HashMap<>();
 
     // iterating through different thread counts
-    for (int numThreads = 1; numThreads <= 10; numThreads++) {
+    for (int numThreads = 1; numThreads <= totalNumThreads; numThreads++) {
       ExecutorService processingExecutor = Executors.newFixedThreadPool(numThreads);
       startTime = System.currentTimeMillis();
 
@@ -45,8 +49,7 @@ public class PipelineImageProcessingUsingArraysAndSharding {
         // String outputImagePath = basePath +
         // "output/processed_mountain_fromIntArrayWithSharding" + i + ".png";
         // diagnose image transformation problems. Save all images.
-        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + " " + numThreads
-            + ".png";
+        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + " " + numThreads + ".png";
         final int numImage = i;
 
         try {
@@ -54,12 +57,8 @@ public class PipelineImageProcessingUsingArraysAndSharding {
           int[] imageArrayWithDimensions = imageToArrayWithDimensions(originalImage);
 
           int originalImageHeight = originalImage.getHeight();
-          int shardHeight = originalImageHeight / numThreads;
-
-          // Number of threads defines the number of shards. This iterates through the
-          // image breaking it into shards.
-          final int totalNumShards = numThreads;
-
+          int shardHeight = originalImageHeight / totalNumShards;
+  
           for (int j = 0; j < totalNumShards; j++) {
             final int numShard = j;
             int startY = j * shardHeight;
