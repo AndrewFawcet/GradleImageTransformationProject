@@ -2,10 +2,6 @@ package image_transformation;
 
 import org.junit.jupiter.api.Test;
 
-import image_transformation.ImageTransformation;
-
-import image_transformation.PipelineImageProcessing;
-
 import java.io.IOException;
 
 
@@ -24,6 +20,10 @@ public class ImageTransformationTest {
   @Test
   public void testPipelineImageProcessingUsingArrays() throws IOException {
     PipelineImageProcessingUsingArrays.runPipelineImageProcessingUsingArrays();   
+  }
+  @Test
+  public void testPipelineImageProcessingUsingArraysAndSharding() throws IOException {
+    PipelineImageProcessingUsingArraysAndSharding.runPipelineImageProcessingUsingArraysAndSharding();   
   }
 
 }
