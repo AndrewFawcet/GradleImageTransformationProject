@@ -18,7 +18,7 @@ public class PipelineImageProcessingUsingArraysAndSharding {
   // the image, then deleting the shards from the hashmap. (no synchronisation)
   // pipelining 10 images putting them directly in an array. No wrapper class.
 
-  // Not Working
+  // All Working
   public static void runPipelineImageProcessingUsingArraysAndSharding() {
     // Number of images to process
     int numImages = 10;
@@ -42,9 +42,11 @@ public class PipelineImageProcessingUsingArraysAndSharding {
 
       for (int i = 1; i <= numImages; i++) {
         String inputImagePath = basePath + "input/mountain" + i + ".png";
-//        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + ".png";
-        //diagnose image transformation problems. Save all images.
-        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + " "+ numThreads + ".png";
+        // String outputImagePath = basePath +
+        // "output/processed_mountain_fromIntArrayWithSharding" + i + ".png";
+        // diagnose image transformation problems. Save all images.
+        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + " " + numThreads
+            + ".png";
         final int numImage = i;
 
         try {
@@ -56,29 +58,28 @@ public class PipelineImageProcessingUsingArraysAndSharding {
 
           // Number of threads defines the number of shards. This iterates through the
           // image breaking it into shards.
-          int numShards = numThreads;
+          final int totalNumShards = numThreads;
 
-          for (int j = 0; j < numShards; j++) {
+          for (int j = 0; j < totalNumShards; j++) {
             final int numShard = j;
             int startY = j * shardHeight;
-            int endY = (j == numThreads - 1) ? originalImage.getHeight() : startY + shardHeight;
+            int endY = (j == totalNumShards - 1) ? originalImageHeight : startY + shardHeight;
 
             int[] shard = getShard(imageArrayWithDimensions, originalImage.getWidth(), startY, endY);
 
             processingExecutor.submit(() -> {
               int[] processedShard = processImageShard(shard);
-              int key = numImage * 100 + numShard;
-              shardsMap.put(key, processedShard);
-              int shardCount = shardsCountMap.getOrDefault(numImage, 0);
+              int shardsKey = totalNumShards * 10000 + numImage * 100 + numShard;
+              shardsMap.put(shardsKey, processedShard);
+              int countKey = totalNumShards * 100 + numImage;
+              int shardCount = shardsCountMap.getOrDefault(countKey, 0);
               shardCount++;
-              shardsCountMap.put(numImage, shardCount);
-              if (shardCount == numShards) {
+              shardsCountMap.put(countKey, shardCount);
+              if (shardCount == totalNumShards) {
                 // All shards for this image number are present, collate and save the image,
-                // then remove shards from Map
-
-
-                collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeight, numShards);
-                removeShards(numShards, numImage, shardsMap, shardsCountMap);
+                // then remove shards from Map(s)
+                collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeight, totalNumShards);
+                removeShards(numImage, shardsMap, shardsCountMap, totalNumShards);
               }
 
             });
@@ -175,35 +176,33 @@ public class PipelineImageProcessingUsingArraysAndSharding {
     int[] pixelDataWithDimensionsGreyscaled = grayscaleImageArray(pixelDataWithDimensionsInverted);
 
     return pixelDataWithDimensionsGreyscaled;
-
   }
 
   public static void collateAndSaveImage(int numImage, Map<Integer, int[]> shardsMap, String outputImagePath,
-      int originalImageHeight, int numShards) {
-    // int shardHeight = -1;
+      int originalImageHeight, int totalNumShards) {
 
     // Collect all shards for the given image number into a single array
-    int[] assembledImage = null;
+    int[] assembledImageArray = null;
     boolean allShardsPresent = true;
 
-    for (int j = 0; j < numShards; j++) {
-      int key = numImage * 100 + j;
+    for (int j = 0; j < totalNumShards; j++) {
+      int key = totalNumShards * 10000 + numImage * 100 + j;
       if (shardsMap.containsKey(key)) {
         int[] shard = shardsMap.get(key);
         int shardWidth = shard[0]; // Extract shard width
         int shardHeight = shard[1]; // Extract shard height
 
-        if (assembledImage == null) {
+        if (assembledImageArray == null) {
           // Initialize assembled image array considering width and original image height
-          assembledImage = new int[2 + shardWidth * originalImageHeight];
-          assembledImage[0] = shardWidth; //Width
-          assembledImage[1] = originalImageHeight; // Total height of the image
+          assembledImageArray = new int[2 + shardWidth * originalImageHeight];
+          assembledImageArray[0] = shardWidth; // Width
+          assembledImageArray[1] = originalImageHeight; // Total height of the image
         }
 
-        // Copy the shard data into the assembled image array
-        int startIndex = 2 + j * shardHeight * shardWidth;
-        System.arraycopy(shard, 2, assembledImage, startIndex, shard.length - 2);
-        //        System.arraycopy(shard, 2, assembledImage, (j * shardHeight + 2) * shardWidth, shard.length - 2);
+        // Copy the shard data into the assembled image array, taking into account
+        // 180-degree rotation
+        int startIndex = 2 + (totalNumShards - j - 1) * shardHeight * shardWidth;
+        System.arraycopy(shard, 2, assembledImageArray, startIndex, shard.length - 2);
       } else {
         System.out.println("All shards are not present, error in collating to save image. ");
         allShardsPresent = false;
@@ -211,9 +210,9 @@ public class PipelineImageProcessingUsingArraysAndSharding {
       }
     }
 
-    if (allShardsPresent && assembledImage != null) {
+    if (allShardsPresent && assembledImageArray != null) {
       // Save the assembled image
-      saveArrayWithDimensions(assembledImage, outputImagePath);
+      saveArrayWithDimensions(assembledImageArray, outputImagePath);
     }
   }
 
@@ -230,22 +229,20 @@ public class PipelineImageProcessingUsingArraysAndSharding {
     File outputFile = new File(outputImagePath);
     try {
       ImageIO.write(image, "png", outputFile);
-      System.out.println("intArray Image saved successfully.");
+      System.out.println(outputFile.getName() + "  Image saved successfully.");
     } catch (IOException e) {
       System.out.println("Error saving intArray image: " + e.getMessage());
     }
   }
 
-  public static void removeShards(int numShards, int numImage, Map<Integer, int[]> shardsMap,
-      Map<Integer, Integer> shardsCountMap) {
-    // Remove shards from the map for this image number
-    for (int j = 0; j < numShards; j++) {
-      shardsMap.remove(numImage * 100 + j);
+  public static void removeShards(int numImage, Map<Integer, int[]> shardsMap,
+      Map<Integer, Integer> shardsCountMap, int totalNumShards) {
+    // Remove image shards from the map for this image number
+    for (int j = 0; j < totalNumShards; j++) {
+      shardsMap.remove(totalNumShards * 10000 + numImage * 100 + j);
     }
-    // remove 10 from the shardsCountMap
-    shardsCountMap.put(numImage, shardsCountMap.get(numImage) - numShards);
-    System.out.println("successfuly removed for image " + numImage + ", shard count " + shardsCountMap.get(numImage));
-
+    // remove count from shardsCountMap
+    shardsCountMap.remove(totalNumShards * 100 + numImage);
   }
 
   public static int[] rotateImageArray(int[] pixelDataWithDimensions, int width, int startY, int endY) {
@@ -270,7 +267,6 @@ public class PipelineImageProcessingUsingArraysAndSharding {
         rotatedPixelData[newY * width + newX + index] = (alpha << 24) | (pixel & 0x00FFFFFF);
       }
     }
-
     return rotatedPixelData;
   }
 
@@ -327,7 +323,6 @@ public class PipelineImageProcessingUsingArraysAndSharding {
         index++;
       }
     }
-
     return grayscalePixelData;
   }
 
