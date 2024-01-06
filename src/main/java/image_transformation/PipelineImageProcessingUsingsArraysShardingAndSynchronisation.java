@@ -1,28 +1,29 @@
 package image_transformation;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.awt.image.BufferedImage;
+
 import javax.imageio.ImageIO;
 
-public class PipelineImageProcessingUsingArraysAndSharding {
-
-  // initial int array with sharding
-  // placing shard in hashmap, if shards for image complete, collating and saving
-  // the image, then deleting the shards from the hashmap. (no synchronisation)
+public class PipelineImageProcessingUsingsArraysShardingAndSynchronisation {
+// initial int array with sharding
+  // placing shard in concurrent hashmap, if shards for image complete, collating and saving
+  // the image, then deleting the shards from the concurrent hashmap. 
+  //(Synchronisation maintained through concurrent hashmap)
   // pipelining 10 images putting them directly in an array. No wrapper class.
 
   // All Working
-  public static void runPipelineImageProcessingUsingArraysAndSharding() {
-    // Number of images to process (keep below 100, otherwise adjust hashmap keys.)
+  public static void runPipelineImageProcessingUsingArraysShardingAndSynchronisation() {
+    // Number of images to process (keep below 100, otherwise adjust hashmap keys)
     int numImages = 10;
-    //Number of shards to break the images into for processing 
+    //Number of shards to break the images into for processing
     int totalNumShards = 10;
     //Number of threads to use for the processing (1 to the total number is tested)
     int totalNumThreads = 10;
@@ -36,8 +37,8 @@ public class PipelineImageProcessingUsingArraysAndSharding {
     String basePath = "C:/PhD/Code/GradleImageTransformationProject/src/main/resources/";
 
     // Collect shards data in a map
-    Map<Integer, int[]> shardsMap = new HashMap<>();
-    Map<Integer, Integer> shardsCountMap = new HashMap<>();
+    Map<Integer, int[]> shardsMap = new ConcurrentHashMap<>();
+    Map<Integer, Integer> shardsCountMap = new ConcurrentHashMap<>();
 
     // iterating through different thread counts
     for (int numThreads = 1; numThreads <= totalNumThreads; numThreads++) {
@@ -111,7 +112,7 @@ public class PipelineImageProcessingUsingArraysAndSharding {
 
     }
 
-    String csvFilePath = basePath + "pipelineTimings_intArraysWithSharding.csv";
+    String csvFilePath = basePath + "pipelineTimings_intArraysWithShardingAndSynchronisation.csv";
 
     try (FileWriter writer = new FileWriter(csvFilePath)) {
       // Write the CSV data to the file
@@ -333,5 +334,8 @@ public class PipelineImageProcessingUsingArraysAndSharding {
       e.printStackTrace();
     }
   }
+
+  
+
 
 }
