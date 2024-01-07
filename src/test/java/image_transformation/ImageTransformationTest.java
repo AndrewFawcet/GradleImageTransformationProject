@@ -25,6 +25,10 @@ public class ImageTransformationTest {
   public void testPipelineImageProcessingUsingArraysAndSharding() throws IOException {
     PipelineImageProcessingUsingArraysAndSharding.runPipelineImageProcessingUsingArraysAndSharding();   
   }
+  @Test
+  public void testPipelineImageProcessingUsingArraysShardingAndSynchronisation() throws IOException {
+    PipelineImageProcessingUsingArraysShardingAndSynchronisation.runPipelineImageProcessingUsingArraysShardingAndSynchronisation();   
+  }
 
 }
 

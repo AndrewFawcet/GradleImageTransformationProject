@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 
-public class PipelineImageProcessingUsingsArraysShardingAndSynchronisation {
+public class PipelineImageProcessingUsingArraysShardingAndSynchronisation {
 // initial int array with sharding
   // placing shard in concurrent hashmap, if shards for image complete, collating and saving
   // the image, then deleting the shards from the concurrent hashmap. 

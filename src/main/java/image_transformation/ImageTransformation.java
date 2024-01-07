@@ -21,7 +21,7 @@ public class ImageTransformation {
 
             switch (choice) {
                 case 4:
-                    PipelineImageProcessingUsingsArraysShardingAndSynchronisation.runPipelineImageProcessingUsingArraysShardingAndSynchronisation();
+                    PipelineImageProcessingUsingArraysShardingAndSynchronisation.runPipelineImageProcessingUsingArraysShardingAndSynchronisation();
                     break;               
                 case 3:
                     PipelineImageProcessingUsingArraysAndSharding.runPipelineImageProcessingUsingArraysAndSharding();
