@@ -19,5 +19,6 @@ dependencies {
 }
 
 tasks.named<Test>("test") {
+  jvmArgs("-Xmx4g")   //increase the size of memeory to 4GB, stops stack overflow.
   useJUnitPlatform()
 }
