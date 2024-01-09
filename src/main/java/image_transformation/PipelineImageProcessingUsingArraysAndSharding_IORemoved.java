@@ -1,30 +1,33 @@
 package image_transformation;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
-public class PipelineImageProcessingUsingArraysShardingAndSynchronisation {
-// initial int array with sharding
-  // placing shard in concurrent hashmap, if shards for image complete, collating and saving
-  // the image, then deleting the shards from the concurrent hashmap. 
-  //(Synchronisation maintained through concurrent hashmap)
+public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
+
+  // initial int array with sharding
+  // placing shard in hashmap, if shards for image complete
+  // IO operations for reading the raw image and writing to disk after processing
+  // have been removed from the timing
+  // the image, then deleting the shards from the hashmap. (no synchronisation)
   // pipelining 10 images putting them directly in an array. No wrapper class.
 
-  // All Working
-  public static void runPipelineImageProcessingUsingArraysShardingAndSynchronisation() {
-    // Number of images to process (keep below 100, otherwise adjust hashmap keys)
+  // Not Working
+  public static void runPipelineImageProcessingUsingArraysAndSharding_IORemoved() {
+    // Number of images to process (keep below 100, otherwise adjust hashmap keys.)
     int numImages = 10;
-    //Number of shards to break the images into for processing
+    // Number of shards to break the images into for processing
     int totalNumShards = 10;
-    //Number of threads to use for the processing (1 to the total number is tested)
+    // Number of threads to use for the processing (1 to the total number is tested)
     int totalNumThreads = 10;
 
     // Record the start time for each run (only one run for now)
@@ -35,9 +38,39 @@ public class PipelineImageProcessingUsingArraysShardingAndSynchronisation {
     // Paths and directories
     String basePath = "C:/PhD/Code/GradleImageTransformationProject/src/main/resources/";
 
+    // read the one image in, transfer to an int Array, use the int array for all
+    // image transfomations
+    String inputImagePath = basePath + "input/mountain1.png";
+    int[] imageArrayWithDimensions = new int[0];
+
+    // int originalImageHeight = 0;
+    int originalImageWidth = 0;
+    int originalImageHeight = 0;
+
+    try {
+      BufferedImage originalImage = ImageIO.read(new File(inputImagePath));
+      // test
+      String outputTest = basePath + "pictureTest.png";
+      File outputFile = new File(outputTest);
+      ImageIO.write(originalImage, "png", outputFile);
+
+      imageArrayWithDimensions = imageToArrayWithDimensions(originalImage);
+      // test
+      saveArrayWithDimensions(imageArrayWithDimensions, basePath + "pictureArrayTest.png");
+
+      originalImageHeight = originalImage.getHeight();
+      originalImageWidth = originalImage.getHeight();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    final int originalImageHeightFinal = originalImageHeight;
+    final int[] imageArrayWithDimensionsFinal = imageArrayWithDimensions; 
+    saveArrayWithDimensions(imageArrayWithDimensionsFinal, basePath + "pictureArrayFinalTest.png");
+    
     // Collect shards data in a map
-    Map<Integer, int[]> shardsMap = new ConcurrentHashMap<>();
-    Map<Integer, Integer> shardsCountMap = new ConcurrentHashMap<>();
+    Map<Integer, int[]> shardsMap = new HashMap<>();
+    Map<Integer, Integer> shardsCountMap = new HashMap<>();
 
     // iterating through different thread counts
     for (int numThreads = 1; numThreads <= totalNumThreads; numThreads++) {
@@ -45,46 +78,42 @@ public class PipelineImageProcessingUsingArraysShardingAndSynchronisation {
       startTime = System.currentTimeMillis();
 
       for (int i = 1; i <= numImages; i++) {
-        String inputImagePath = basePath + "input/mountain" + i + ".png";
-        // String outputImagePath = basePath +
-        // "output/processed_mountain_fromIntArrayWithSharding" + i + ".png";
         // diagnose image transformation problems. Save all images.
         String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + " " + numThreads + ".png";
         final int numImage = i;
+        
+        int shardHeight = originalImageHeightFinal / totalNumShards;
+        System.out.println("shardHeight "+ shardHeight);
+        System.out.println("originalImageHeightFinal  "+ originalImageHeightFinal);
+        System.out.println("originalImageHeight  "+ originalImageHeight);
+        
 
-        try {
-          BufferedImage originalImage = ImageIO.read(new File(inputImagePath));
-          int[] imageArrayWithDimensions = imageToArrayWithDimensions(originalImage);
+        //test
+        saveArrayWithDimensions(imageArrayWithDimensionsFinal, basePath + "pictureArrayTestInn.png");
 
-          int originalImageHeight = originalImage.getHeight();
-          int shardHeight = originalImageHeight / totalNumShards;
-  
-          for (int j = 0; j < totalNumShards; j++) {
-            final int numShard = j;
-            int startY = j * shardHeight;
-            int endY = (j == totalNumShards - 1) ? originalImageHeight : startY + shardHeight;
+        for (int j = 0; j < totalNumShards; j++) {
+          final int numShard = j;
+          int startY = j * shardHeight;
+          int endY = (j == totalNumShards - 1) ? originalImageHeight : startY + shardHeight;
 
-            int[] shard = getShard(imageArrayWithDimensions, originalImage.getWidth(), startY, endY);
+          int[] shard = getShard(imageArrayWithDimensionsFinal, originalImageWidth, startY, endY);
 
-            processingExecutor.submit(() -> {
-              int[] processedShard = processImageShard(shard);
-              int shardsKey = totalNumShards * 10000 + numImage * 100 + numShard;
-              shardsMap.put(shardsKey, processedShard);
-              int countKey = totalNumShards * 100 + numImage;
-              int shardCount = shardsCountMap.getOrDefault(countKey, 0);
-              shardCount++;
-              shardsCountMap.put(countKey, shardCount);
-              if (shardCount == totalNumShards) {
-                // All shards for this image number are present, collate and save the image,
-                // then remove shards from Map(s)
-                collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeight, totalNumShards);
-                removeShards(numImage, shardsMap, shardsCountMap, totalNumShards);
-              }
+          processingExecutor.submit(() -> {
+            int[] processedShard = processImageShard(shard);
+            int shardsKey = totalNumShards * 10000 + numImage * 100 + numShard;
+            shardsMap.put(shardsKey, processedShard);
+            int countKey = totalNumShards * 100 + numImage;
+            int shardCount = shardsCountMap.getOrDefault(countKey, 0);
+            shardCount++;
+            shardsCountMap.put(countKey, shardCount);
+            if (shardCount == totalNumShards) {
+              // All shards for this image number are present, collate and save the image,
+              // then remove shards from Map(s)
+              collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeightFinal, totalNumShards);
+              removeShards(numImage, shardsMap, shardsCountMap, totalNumShards);
+            }
 
-            });
-          }
-        } catch (IOException e) {
-          e.printStackTrace();
+          });
         }
       }
 
@@ -111,7 +140,7 @@ public class PipelineImageProcessingUsingArraysShardingAndSynchronisation {
 
     }
 
-    String csvFilePath = basePath + "pipelineTimings_intArraysWithShardingAndSynchronisation.csv";
+    String csvFilePath = basePath + "pipelineTimings_intArraysWithSharding.csv";
 
     try (FileWriter writer = new FileWriter(csvFilePath)) {
       // Write the CSV data to the file
@@ -333,8 +362,5 @@ public class PipelineImageProcessingUsingArraysShardingAndSynchronisation {
       e.printStackTrace();
     }
   }
-
-  
-
 
 }
