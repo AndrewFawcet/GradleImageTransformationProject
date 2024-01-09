@@ -15,15 +15,19 @@ public class ImageTransformation {
             System.out.println("2. Pipeline Image Processing Using int Arrays");
             System.out.println("3. Pipeline Image Processing Using int Arrays and Sharding (no synchronisation)");
             System.out.println("4. Pipeline Image Processing Using int Arrays, Sharding and concurrent hashmap (synchronisation)");
-            System.out.println("5. Check stack size");
+            System.out.println("5. Pipeline Image Processing Using int Arrays and Sharding (no synchronisation) testing shards from 1 to 101");
+            System.out.println("6. Pipeline Image Processing Using int Arrays and Sharding (with synchronisation) testing shards from 1 to 101");
                                     
             System.out.println("0. Exit");
 
             choice = scanner.nextInt();
 
             switch (choice) {
+                case 6:
+                    PipelineImageProcessingUsingArraysShardingAndSynchronisation2.runPipelineImageProcessingUsingArraysShardingAndSynchronisation2();
+                    break;
                 case 5:
-                    CheckStackSize.runCheckStackSize();
+                    PipelineImageProcessingUsingArraysAndSharding2.runPipelineImageProcessingUsingArraysAndSharding2();
                     break;
                 case 4:
                     PipelineImageProcessingUsingArraysShardingAndSynchronisation.runPipelineImageProcessingUsingArraysShardingAndSynchronisation();
