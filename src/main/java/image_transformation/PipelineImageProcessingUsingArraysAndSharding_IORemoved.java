@@ -5,7 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +20,7 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
   // the image, then deleting the shards from the hashmap. (no synchronisation)
   // pipelining 10 images putting them directly in an array. No wrapper class.
 
-  // Not Working
+  // All Working
   public static void runPipelineImageProcessingUsingArraysAndSharding_IORemoved() {
     // Number of images to process (keep below 100, otherwise adjust hashmap keys.)
     int numImages = 10;
@@ -47,26 +46,18 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
     int originalImageWidth = 0;
     int originalImageHeight = 0;
 
+    //create an array of an image for all image transformations to be sourced from
     try {
       BufferedImage originalImage = ImageIO.read(new File(inputImagePath));
-      // test
-      String outputTest = basePath + "pictureTest.png";
-      File outputFile = new File(outputTest);
-      ImageIO.write(originalImage, "png", outputFile);
-
       imageArrayWithDimensions = imageToArrayWithDimensions(originalImage);
-      // test
-      saveArrayWithDimensions(imageArrayWithDimensions, basePath + "pictureArrayTest.png");
-
       originalImageHeight = originalImage.getHeight();
-      originalImageWidth = originalImage.getHeight();
+      originalImageWidth = originalImage.getWidth();
     } catch (IOException e) {
       e.printStackTrace();
     }
 
     final int originalImageHeightFinal = originalImageHeight;
     final int[] imageArrayWithDimensionsFinal = imageArrayWithDimensions; 
-    saveArrayWithDimensions(imageArrayWithDimensionsFinal, basePath + "pictureArrayFinalTest.png");
     
     // Collect shards data in a map
     Map<Integer, int[]> shardsMap = new HashMap<>();
@@ -79,17 +70,9 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
 
       for (int i = 1; i <= numImages; i++) {
         // diagnose image transformation problems. Save all images.
-        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + i + " " + numThreads + ".png";
         final int numImage = i;
-        
+        String outputImagePath = basePath + "output/processed_mountain_fromIntArrayWithSharding" + numImage + " " + numThreads + ".png";        
         int shardHeight = originalImageHeightFinal / totalNumShards;
-        System.out.println("shardHeight "+ shardHeight);
-        System.out.println("originalImageHeightFinal  "+ originalImageHeightFinal);
-        System.out.println("originalImageHeight  "+ originalImageHeight);
-        
-
-        //test
-        saveArrayWithDimensions(imageArrayWithDimensionsFinal, basePath + "pictureArrayTestInn.png");
 
         for (int j = 0; j < totalNumShards; j++) {
           final int numShard = j;
@@ -109,6 +92,7 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
             if (shardCount == totalNumShards) {
               // All shards for this image number are present, collate and save the image,
               // then remove shards from Map(s)
+//              collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeightFinal, totalNumShards);
               collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeightFinal, totalNumShards);
               removeShards(numImage, shardsMap, shardsCountMap, totalNumShards);
             }
@@ -202,7 +186,7 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
     int[] pixelDataWithDimensionsRotated = rotateImageArray(pixelDataWithDimensions, width, 0, shardHeight);
     int[] pixelDataWithDimensionsInverted = invertImageArray(pixelDataWithDimensionsRotated);
     int[] pixelDataWithDimensionsGreyscaled = grayscaleImageArray(pixelDataWithDimensionsInverted);
-
+    
     return pixelDataWithDimensionsGreyscaled;
   }
 
