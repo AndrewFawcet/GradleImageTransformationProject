@@ -14,7 +14,7 @@ public class PipelineImageProcessingUsingArrays_IORemoved {
   // initial int array
   // pipelining 10 images putting them directly in an array. No wrapper class. All
   // Working
-  public static void runPipelineImageProcessingUsingArrays_IORemoved() {
+  public static void runPipelineImageProcessingUsingArrays_IORemoved(boolean saveImages) {
     // Number of images to process
     int numImages = 10;
     // Number of threads to use for the processing (1 to the total number is tested)
@@ -33,51 +33,24 @@ public class PipelineImageProcessingUsingArrays_IORemoved {
     String inputImagePath = basePath + "input/mountain1.png";
     int[] imageArrayWithDimensions = new int[0];
 
-    // int originalImageHeight = 0;
-    int originalImageWidth = 0;
-    int originalImageHeight = 0;
-
     try {
       BufferedImage originalImage = ImageIO.read(new File(inputImagePath));
-      // test
-      String outputTest = basePath + "pictureTest.png";
-      File outputFile = new File(outputTest);
-      ImageIO.write(originalImage, "png", outputFile);
-
       imageArrayWithDimensions = imageToArrayWithDimensions(originalImage);
-      // test
-      saveArrayWithDimensions(imageArrayWithDimensions, basePath + "pictureArrayTest.png");
-
-      originalImageHeight = originalImage.getHeight();
-      originalImageWidth = originalImage.getHeight();
     } catch (IOException e) {
       e.printStackTrace();
     }
-    final int[] imageArrayWithDimensionsFinal = imageArrayWithDimensions; 
+    final int[] imageArrayWithDimensionsFinal = imageArrayWithDimensions;
 
     // iterating through different thread counts
     for (int numThreads = 1; numThreads <= totalNumThreads; numThreads++) {
-      // Create an executor with a variable number of threads for inversion and
-      // grayscale
+      // Create an executor with a variable number of threads for inversion, rotation and grayscale
       ExecutorService processingExecutor = Executors.newFixedThreadPool(numThreads);
       startTime = System.currentTimeMillis();
 
       // Iterate through the images
       for (int i = 1; i <= numImages; i++) {
-//        String inputImagePath = basePath + "input/mountain" + i + ".png";
         String outputImagePath = basePath + "output/processed_mountain" + i + ".png";
-        processingExecutor.submit(() -> processImage(imageArrayWithDimensionsFinal, outputImagePath));
-
-//        try {
-          // Load the original image
-//          BufferedImage originalImage = ImageIO.read(new File(inputImagePath));
-
-//          int[] imageArrayWithDimensions = imageToArrayWithDimensions(originalImage);
-
-//          processingExecutor.submit(() -> processImage(imageArrayWithDimensions, outputImagePath));
-//        } catch (IOException e) {
-//          e.printStackTrace();
-//        }
+        processingExecutor.submit(() -> processImage(imageArrayWithDimensionsFinal, outputImagePath, saveImages));
       }
 
       // Shutdown the processing executor when all tasks are submitted
@@ -132,11 +105,13 @@ public class PipelineImageProcessingUsingArrays_IORemoved {
     return pixelDataWithDimensions;
   }
 
-  public static void processImage(int[] pixelDataWithDimensions, String outputImagePath) {
+  public static void processImage(int[] pixelDataWithDimensions, String outputImagePath, boolean saveImages) {
     int[] pixelDataWithDimensionsRotated = rotateImageArray(pixelDataWithDimensions);
     int[] pixelDataWithDimensionsInverted = invertImageArray(pixelDataWithDimensionsRotated);
     int[] pixelDataWithDimensionsGreyscaled = grayscaleImageArray(pixelDataWithDimensionsInverted);
-    saveArrayWithDimensions(pixelDataWithDimensionsGreyscaled, outputImagePath);
+    if (saveImages){
+      saveArrayWithDimensions(pixelDataWithDimensionsGreyscaled, outputImagePath);
+    }
   }
 
   public static void saveArrayWithDimensions(int[] pixelDataWithDimensions, String outputImagePath) {

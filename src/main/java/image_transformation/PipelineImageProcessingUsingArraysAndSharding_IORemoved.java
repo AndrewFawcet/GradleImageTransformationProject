@@ -21,7 +21,7 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
   // pipelining 10 images putting them directly in an array. No wrapper class.
 
   // All Working
-  public static void runPipelineImageProcessingUsingArraysAndSharding_IORemoved() {
+  public static void runPipelineImageProcessingUsingArraysAndSharding_IORemoved(boolean saveImages) {
     // Number of images to process (keep below 100, otherwise adjust hashmap keys.)
     int numImages = 10;
     // Number of shards to break the images into for processing
@@ -93,7 +93,7 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
               // All shards for this image number are present, collate and save the image,
               // then remove shards from Map(s)
 //              collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeightFinal, totalNumShards);
-              collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeightFinal, totalNumShards);
+              collateAndSaveImage(numImage, shardsMap, outputImagePath, originalImageHeightFinal, totalNumShards, saveImages);
               removeShards(numImage, shardsMap, shardsCountMap, totalNumShards);
             }
 
@@ -191,7 +191,7 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
   }
 
   public static void collateAndSaveImage(int numImage, Map<Integer, int[]> shardsMap, String outputImagePath,
-      int originalImageHeight, int totalNumShards) {
+      int originalImageHeight, int totalNumShards, boolean saveImages) {
 
     // Collect all shards for the given image number into a single array
     int[] assembledImageArray = null;
@@ -221,8 +221,8 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
         break;
       }
     }
-
-    if (allShardsPresent && assembledImageArray != null) {
+    // only save the collated image if the input from the ImageTransformation menu is yes.  
+    if (allShardsPresent && assembledImageArray != null && saveImages) {
       // Save the assembled image
       saveArrayWithDimensions(assembledImageArray, outputImagePath);
     }
@@ -238,13 +238,15 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
     image.setRGB(0, 0, width, height, pixelDataWithDimensions, 2, width);
 
     // Save the BufferedImage as a PNG file
-    File outputFile = new File(outputImagePath);
-    try {
-      ImageIO.write(image, "png", outputFile);
-      System.out.println(outputFile.getName() + "  Image saved successfully.");
-    } catch (IOException e) {
-      System.out.println("Error saving intArray image: " + e.getMessage());
-    }
+    saveImage(image, outputImagePath);
+
+//    File outputFile = new File(outputImagePath);
+//    try {
+//      ImageIO.write(image, "png", outputFile);
+//      System.out.println(outputFile.getName() + "  Image saved successfully.");
+//    } catch (IOException e) {
+//      System.out.println("Error saving intArray image: " + e.getMessage());
+//    }
   }
 
   public static void removeShards(int numImage, Map<Integer, int[]> shardsMap,
@@ -339,12 +341,15 @@ public class PipelineImageProcessingUsingArraysAndSharding_IORemoved {
   }
 
   // Save the image to a file
-  public static void saveImage(BufferedImage image, String outputFilePath) {
+  public static void saveImage(BufferedImage image, String outputImagePath) {
+    File outputFile = new File(outputImagePath);
     try {
-      ImageIO.write(image, "png", new File(outputFilePath));
+      ImageIO.write(image, "png", outputFile);
+      System.out.println(outputFile.getName() + "  Image saved successfully.");
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
 }
+ 
