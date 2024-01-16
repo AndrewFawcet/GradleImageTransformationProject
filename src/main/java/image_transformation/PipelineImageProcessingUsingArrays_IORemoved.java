@@ -75,7 +75,7 @@ public class PipelineImageProcessingUsingArrays_IORemoved {
       csvData.append(numThreads).append(",").append(totalTime).append("\n");
     }
 
-    String csvFilePath = basePath + "pipelineTimings_intArrays.csv";
+    String csvFilePath = basePath + "pipelineTimings_intArraysIORemoved.csv";
 
     try (FileWriter writer = new FileWriter(csvFilePath)) {
       // Write the CSV data to the file

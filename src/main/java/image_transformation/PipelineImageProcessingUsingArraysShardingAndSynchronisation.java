@@ -111,7 +111,7 @@ public class PipelineImageProcessingUsingArraysShardingAndSynchronisation {
 
     }
 
-    String csvFilePath = basePath + "pipelineTimings_intArraysWithShardingAndSynchronisation.csv";
+    String csvFilePath = basePath + "pipelineTimings_intArraysWithShardingAndSynchronisationIORemoved.csv";
 
     try (FileWriter writer = new FileWriter(csvFilePath)) {
       // Write the CSV data to the file
