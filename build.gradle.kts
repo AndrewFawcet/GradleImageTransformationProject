@@ -4,7 +4,9 @@ plugins {
 
 tasks.named<Jar>("jar"){
   manifest {
+//    attributes["Main-Class"] = "image_transformation.Menu"
     attributes["Main-Class"] = "image_transformation.ImageTransformation"
+    
   }
 }
 

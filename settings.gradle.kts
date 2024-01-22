@@ -6,3 +6,4 @@
  */
 
 rootProject.name = "GradleImageTransformationProject"
+//rootProject.name = "Menu"

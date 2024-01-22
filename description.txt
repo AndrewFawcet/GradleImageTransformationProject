@@ -10,15 +10,5 @@
 	-Storing the image data into arrays (int Arrays) without a wrapper. Breaking the int arrays (representing the image) into 10 shards for processing. The shards are stored in a hashmap for operations, and at image collation and saving the appropriate shards are removed frm the hashmap. Note no synchronisation is used for the hashmap!
 	-Same as method above, but instead of storing the shards in a standard hashmap, a hashmap controlling synchronisation of reading and writing is used (ConcurrentHashMap). (Basically write operations are serialised.)
 
-	The code should be run and tested from the jar file 'GradleImageTransformation Project.jar' to ensure efficient thread use. Running the code from an editor may cause inconsistent results.
+	The code should be run and tested from the jar file 'GradleImageTransformationProject.jar' to ensure efficient thread use. Running the code from an editor may cause inconsistent results.
 
-Questions on the code: (8/1/2023)
-
-which parameters do you recommend playing with? number of images, number of threads, size of images etc.
-I could for example do many tests using small images. Or tests using huge images, and many shards, and further increase the number fo threads.
-
-Should the use of ImageBuffer be removed completely from the conversion process in using int Arrays? All methods currently use ImageBuffer to convert the image to an intArray, and then again to save it to as a PNG image. 
-
-Is the BufferdImage appropriate as a basic test for using a wrapper class? Would it be better to use a secondary class built from scratch to access the images?
-
-Would it be a good idea to explore the synchronisation functions in java, particularly in regard to hashmaps and storing data?
